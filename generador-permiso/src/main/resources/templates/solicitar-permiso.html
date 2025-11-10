@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitar Permiso - ITCA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .form-container {
+            border: 2px solid #000;
+            padding: 25px;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+        }
+        .section-title {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .field-line {
+            border-bottom: 1px solid #000;
+            min-height: 30px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+        }
+        .checkbox-group {
+            margin: 20px 0;
+        }
+        .signature-area {
+            margin-top: 40px;
+            border-top: 1px solid #000;
+            padding-top: 15px;
+        }
+        .form-control-custom {
+            border: none;
+            border-bottom: 1px solid #000;
+            border-radius: 0;
+            padding-left: 10px;
+            background: transparent;
+            display: inline;
+            width: auto;
+        }
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+        .duration-option {
+            margin-bottom: 15px;
+        }
+        .duration-option label {
+            font-weight: bold;
+        }
+        .comprobante-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            display: none;
+        }
+        .form-title {
+            text-align: center;
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 20px;
+        }
+        .hidden-field {
+            display: none;
+        }
+        .time-input-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+        .form-check-input.is-invalid {
+            border-color: #dc3545;
+        }
+        .alert-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+        }
+        .current-date {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">ITCA - Solicitud de Permiso</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/permisos/dashboard}">Dashboard</a>
+            <a class="nav-link" th:href="@{/permisos/mis-permisos}">Mis Permisos</a>
+            <a class="nav-link" th:href="@{/logout}">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Contenedor para alertas flotantes -->
+<div class="alert-container"></div>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">SOLICITUD DE PERMISO ESTUDIANTES</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Mensajes de éxito/error del servidor -->
+                    <div th:if="${param.success}" class="alert alert-success">
+                        ✅ Solicitud de permiso enviada correctamente.
+                    </div>
+                    <div th:if="${param.error}" class="alert alert-danger">
+                        ❌ Error al enviar la solicitud. Por favor intenta nuevamente.
+                    </div>
+
+                    <form id="solicitudForm" th:action="@{/permisos/guardar}" method="post" enctype="multipart/form-data" novalidate>
+
+                        <div class="form-container">
+                            <div class="form-title">SOLICITUD DE PERMISO ESTUDIANTES</div>
+
+                            <!-- Información del Estudiante -->
+                            <div class="mb-4">
+                                <div class="row">
+                                    <div class="col-8">
+                                        <strong class="required-field">Nombre Completo:</strong>
+                                        <div class="field-line" th:text="${alumno != null ? alumno.nombre + ' ' + alumno.apellido : 'Nombre no disponible'}"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <strong>Carrera:</strong>
+                                        <div class="field-line"
+                                             th:text="${alumno != null and alumno.carrera != null ? alumno.carrera.nombre : 'Carrera no disponible'}"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Fecha actual -->
+                                <div class="row mt-3">
+                                    <div class="col-6">
+                                        <strong>Fecha de solicitud:</strong>
+                                        <div class="field-line current-date" id="fechaActual"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tipo de Permiso -->
+                            <div class="mb-4">
+                                <div class="section-title required-field">TIPO DE PERMISO (Seleccionar uno)</div>
+
+                                <div class="checkbox-group">
+                                    <!-- Mostrar mensaje si no hay tipos de permiso disponibles -->
+                                    <div th:if="${#lists.isEmpty(tiposPermiso)}" class="alert alert-warning">
+                                        No hay tipos de permiso disponibles en este momento.
+                                    </div>
+
+                                    <!-- Cargar tipos de permiso dinámicamente desde la base de datos -->
+                                    <div th:if="${!#lists.isEmpty(tiposPermiso)}" class="row">
+                                        <div th:each="tipo, iterStat : ${tiposPermiso}"
+                                             th:class="${iterStat.index % 2 == 0} ? 'col-6' : 'col-6'">
+                                            <div class="form-check">
+                                                <input class="form-check-input tipo-permiso-radio"
+                                                       type="radio"
+                                                       name="tipoPermisoId"
+                                                       th:id="'tipo_' + ${tipo.id}"
+                                                       th:value="${tipo.id}"
+                                                       th:data-requiere-comprobante="${tipo.requiereComprobante}"
+                                                       th:required="${iterStat.index == 0}">
+                                                <label class="form-check-label" th:for="'tipo_' + ${tipo.id}">
+                                                    <span th:text="${tipo.nombre}">Tipo de Permiso</span>
+                                                    <span th:if="${tipo.requiereComprobante}" class="text-danger small">*</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="error-message" id="tipoPermisoError">Por favor seleccione un tipo de permiso</div>
+
+                                    <small class="text-muted mt-2 d-block">
+                                        <span class="text-danger">*</span> Requiere comprobante adjunto
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Explicación -->
+                            <div class="mb-4">
+                                <strong class="required-field">Explicar:</strong>
+                                <textarea name="motivo" id="motivo" class="form-control mt-2" rows="3"
+                                          placeholder="Describa detalladamente el motivo del permiso..."
+                                          required></textarea>
+                                <div class="error-message" id="motivoError">Por favor describa el motivo del permiso</div>
+                            </div>
+
+                            <!-- Duración del Permiso -->
+                            <div class="mb-4">
+                                <div class="section-title required-field">DURACIÓN DEL PERMISO</div>
+
+                                <!-- Campos ocultos para las fechas que espera el backend -->
+                                <input type="hidden" name="fechaInicioPermiso" id="fechaInicioPermiso">
+                                <input type="hidden" name="fechaFinPermiso" id="fechaFinPermiso">
+
+                                <!-- Opción 1: Horas específicas -->
+                                <div class="duration-option">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="duracionTipo" id="duracionHoras" value="horas" checked>
+                                        <label class="form-check-label" for="duracionHoras">
+                                            Durante: horas de las
+                                            <input type="time" class="form-control-custom hora-input" name="horaInicio" id="horaInicio">
+                                            a las
+                                            <input type="time" class="form-control-custom hora-input" name="horaFin" id="horaFin">
+                                            del día:
+                                            <input type="date" class="form-control-custom fecha-input" name="fechaHoras" id="fechaHoras">
+                                        </label>
+                                    </div>
+                                    <div class="error-message" id="horasError">Por favor complete todos los campos de fecha y hora correctamente</div>
+                                </div>
+
+                                <!-- Opción 2: Días completos -->
+                                <div class="duration-option">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="duracionTipo" id="duracionDias" value="dias">
+                                        <label class="form-check-label" for="duracionDias">
+                                            Durante: días, del
+                                            <input type="date" class="form-control-custom fecha-input" name="fechaInicioDias" id="fechaInicioDias">
+                                            al
+                                            <input type="date" class="form-control-custom fecha-input" name="fechaFinDias" id="fechaFinDias">
+                                        </label>
+                                    </div>
+                                    <div class="error-message" id="diasError">Por favor complete las fechas de inicio y fin correctamente</div>
+                                </div>
+                            </div>
+
+                            <!-- Comprobante -->
+                            <div class="mb-4">
+                                <strong>Comprobante (imagen o documento):</strong>
+                                <input type="file" class="form-control mt-2" name="comprobante" id="comprobante"
+                                       accept="image/*,.pdf,.doc,.docx,.jpg,.jpeg,.png">
+                                <small class="text-muted">Suba una imagen o documento que respalde su solicitud (opcional pero recomendado)</small>
+                                <div class="error-message" id="comprobanteError">Este tipo de permiso requiere un comprobante adjunto</div>
+
+                                <!-- Vista previa de imagen -->
+                                <img id="comprobantePreview" class="comprobante-preview" src="#" alt="Vista previa del comprobante">
+                            </div>
+
+                            <!-- Firma del Solicitante -->
+                            <div class="mb-4">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Firma del solicitante:</strong>
+                                        <div class="field-line">________________</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Estado:</strong>
+                                        <div class="field-line text-warning">PENDIENTE</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Autorizaciones -->
+                            <div class="mb-4">
+                                <div class="section-title">AUTORIZACIONES</div>
+
+                                <div class="signature-area">
+                                    <strong>Autorización del Coordinador Departamento</strong>
+                                    <div class="row mt-2">
+                                        <div class="col-4">
+                                            <strong>Nombre:</strong>
+                                            <div class="field-line">___________________</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <strong>Firma:</strong>
+                                            <div class="field-line">___________________</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <strong>sello</strong>
+                                            <div class="field-line">___________________</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="signature-area">
+                                    <strong>Autorización de Bienestar Estudiantil</strong>
+                                    <div class="row mt-2">
+                                        <div class="col-4">
+                                            <strong>Nombre:</strong>
+                                            <div class="field-line">___________________</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <strong>Firma:</strong>
+                                            <div class="field-line">___________________</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <strong>sello</strong>
+                                            <div class="field-line">___________________</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Observaciones -->
+                            <div class="mb-4">
+                                <strong>Observaciones:</strong>
+                                <textarea name="comentariosAprobador" class="form-control mt-2" rows="2"
+                                          placeholder="Observaciones adicionales..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                📝 Enviar Solicitud de Permiso
+                            </button>
+                            <a th:href="@{/permisos/dashboard}" class="btn btn-secondary btn-lg">Cancelar</a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos del formulario
+        const form = document.getElementById('solicitudForm');
+        const tipoPermisoRadios = document.querySelectorAll('.tipo-permiso-radio');
+        const motivoTextarea = document.getElementById('motivo');
+        const comprobanteInput = document.getElementById('comprobante');
+        const comprobantePreview = document.getElementById('comprobantePreview');
+        const duracionHorasRadio = document.getElementById('duracionHoras');
+        const duracionDiasRadio = document.getElementById('duracionDias');
+        const fechaActualElement = document.getElementById('fechaActual');
+
+        // Campos de horas
+        const fechaHoras = document.getElementById('fechaHoras');
+        const horaInicio = document.getElementById('horaInicio');
+        const horaFin = document.getElementById('horaFin');
+
+        // Campos de días
+        const fechaInicioDias = document.getElementById('fechaInicioDias');
+        const fechaFinDias = document.getElementById('fechaFinDias');
+
+        // Mostrar fecha actual
+        function mostrarFechaActual() {
+            const ahora = new Date();
+            const opciones = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'long'
+            };
+            const fechaFormateada = ahora.toLocaleDateString('es-ES', opciones);
+            fechaActualElement.textContent = fechaFormateada;
+        }
+
+        // Inicializar fecha actual
+        mostrarFechaActual();
+
+        // Vista previa del comprobante (imagen)
+        comprobanteInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    comprobantePreview.src = e.target.result;
+                    comprobantePreview.style.display = 'block';
+                }
+
+                reader.readAsDataURL(file);
+            } else {
+                comprobantePreview.style.display = 'none';
+            }
+        });
+
+        // Manejar las opciones de duración
+        function actualizarEstadoCamposDuracion() {
+            const esHoras = duracionHorasRadio.checked;
+
+            // Habilitar/deshabilitar campos según la selección
+            fechaHoras.disabled = !esHoras;
+            horaInicio.disabled = !esHoras;
+            horaFin.disabled = !esHoras;
+            fechaInicioDias.disabled = esHoras;
+            fechaFinDias.disabled = esHoras;
+
+            // Limpiar validación al cambiar
+            limpiarValidacionGrupo('horas');
+            limpiarValidacionGrupo('dias');
+        }
+
+        duracionHorasRadio.addEventListener('change', actualizarEstadoCamposDuracion);
+        duracionDiasRadio.addEventListener('change', actualizarEstadoCamposDuracion);
+
+        // Inicializar estado de los campos de duración
+        actualizarEstadoCamposDuracion();
+
+        // Validación en tiempo real
+        tipoPermisoRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                validarTipoPermiso();
+                validarComprobante(); // Revalidar comprobante cuando cambia el tipo
+            });
+        });
+
+        motivoTextarea.addEventListener('input', validarMotivo);
+        comprobanteInput.addEventListener('change', validarComprobante);
+
+        // Validación para campos de duración
+        fechaHoras.addEventListener('change', validarDuracion);
+        horaInicio.addEventListener('change', validarDuracion);
+        horaFin.addEventListener('change', validarDuracion);
+        fechaInicioDias.addEventListener('change', validarDuracion);
+        fechaFinDias.addEventListener('change', validarDuracion);
+
+        // Manejar envío del formulario
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (validarFormularioCompleto()) {
+                // Si la validación pasa, enviar el formulario
+                form.submit();
+            } else {
+                mostrarAlerta('Por favor complete todos los campos requeridos correctamente', 'error');
+                // Hacer scroll al primer error
+                const primerError = document.querySelector('.is-invalid');
+                if (primerError) {
+                    primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+
+        // Funciones de validación individuales
+        function validarTipoPermiso() {
+            const tipoSeleccionado = document.querySelector('.tipo-permiso-radio:checked');
+            const errorElement = document.getElementById('tipoPermisoError');
+
+            if (!tipoSeleccionado) {
+                mostrarError('tipoPermisoError', 'Por favor seleccione un tipo de permiso');
+                return false;
+            } else {
+                ocultarError('tipoPermisoError');
+                return true;
+            }
+        }
+
+        function validarMotivo() {
+            const motivo = motivoTextarea.value.trim();
+            const errorElement = document.getElementById('motivoError');
+
+            if (!motivo) {
+                mostrarError('motivoError', 'Por favor describa el motivo del permiso');
+                return false;
+            } else if (motivo.length < 10) {
+                mostrarError('motivoError', 'La descripción debe tener al menos 10 caracteres');
+                return false;
+            } else {
+                ocultarError('motivoError');
+                return true;
+            }
+        }
+
+        function validarComprobante() {
+            const tipoSeleccionado = document.querySelector('.tipo-permiso-radio:checked');
+            const errorElement = document.getElementById('comprobanteError');
+
+            if (!tipoSeleccionado) {
+                ocultarError('comprobanteError');
+                return true; // No validar comprobante si no hay tipo seleccionado
+            }
+
+            const requiereComprobante = tipoSeleccionado.getAttribute('data-requiere-comprobante') === 'true';
+            const archivo = comprobanteInput.files[0];
+
+            if (requiereComprobante && !archivo) {
+                mostrarError('comprobanteError', 'Este tipo de permiso requiere un comprobante adjunto');
+                return false;
+            }
+
+            // Validar tipo de archivo si se subió uno
+            if (archivo) {
+                const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf',
+                    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                const tamanoMaximo = 5 * 1024 * 1024; // 5MB
+
+                if (!tiposPermitidos.includes(archivo.type)) {
+                    mostrarError('comprobanteError', 'Tipo de archivo no permitido. Use JPG, PNG, PDF o DOC');
+                    return false;
+                }
+
+                if (archivo.size > tamanoMaximo) {
+                    mostrarError('comprobanteError', 'El archivo es demasiado grande. Máximo 5MB');
+                    return false;
+                }
+            }
+
+            ocultarError('comprobanteError');
+            return true;
+        }
+
+        function validarDuracion() {
+            if (duracionHorasRadio.checked) {
+                return validarHoras();
+            } else {
+                return validarDias();
+            }
+        }
+
+        function validarHoras() {
+            const fecha = fechaHoras.value;
+            const inicio = horaInicio.value;
+            const fin = horaFin.value;
+            const errorElement = document.getElementById('horasError');
+
+            if (!fecha || !inicio || !fin) {
+                mostrarError('horasError', 'Por favor complete todos los campos de fecha y hora');
+                return false;
+            }
+
+            if (fin <= inicio) {
+                mostrarError('horasError', 'La hora fin debe ser posterior a la hora inicio');
+                return false;
+            }
+
+            ocultarError('horasError');
+            return true;
+        }
+
+        function validarDias() {
+            const inicio = fechaInicioDias.value;
+            const fin = fechaFinDias.value;
+            const errorElement = document.getElementById('diasError');
+
+            if (!inicio || !fin) {
+                mostrarError('diasError', 'Por favor complete las fechas de inicio y fin');
+                return false;
+            }
+
+            if (fin < inicio) {
+                mostrarError('diasError', 'La fecha fin no puede ser anterior a la fecha inicio');
+                return false;
+            }
+
+            ocultarError('diasError');
+            return true;
+        }
+
+        // Función para validar todo el formulario
+        function validarFormularioCompleto() {
+            const validaciones = [
+                validarTipoPermiso(),
+                validarMotivo(),
+                validarComprobante(),
+                validarDuracion()
+            ];
+
+            return validaciones.every(result => result === true);
+        }
+
+        // Funciones auxiliares para mostrar/ocultar errores
+        function mostrarError(elementId, mensaje) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = mensaje;
+            errorElement.style.display = 'block';
+
+            // Marcar campo relacionado como inválido
+            const campoRelacionado = obtenerCampoRelacionado(elementId);
+            if (campoRelacionado) {
+                campoRelacionado.classList.add('is-invalid');
+            }
+        }
+
+        function ocultarError(elementId) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.style.display = 'none';
+
+            // Quitar marca de inválido del campo relacionado
+            const campoRelacionado = obtenerCampoRelacionado(elementId);
+            if (campoRelacionado) {
+                campoRelacionado.classList.remove('is-invalid');
+            }
+        }
+
+        function limpiarValidacionGrupo(grupo) {
+            const errorElement = document.getElementById(grupo + 'Error');
+            if (errorElement) {
+                errorElement.style.display = 'none';
+            }
+
+            // Limpiar clases de error en campos del grupo
+            const campos = document.querySelectorAll('.' + grupo + '-input');
+            campos.forEach(campo => {
+                campo.classList.remove('is-invalid');
+            });
+        }
+
+        function obtenerCampoRelacionado(errorId) {
+            switch(errorId) {
+                case 'tipoPermisoError':
+                    return document.querySelector('.tipo-permiso-radio:checked') || document.querySelector('.tipo-permiso-radio');
+                case 'motivoError':
+                    return motivoTextarea;
+                case 'comprobanteError':
+                    return comprobanteInput;
+                case 'horasError':
+                    return fechaHoras;
+                case 'diasError':
+                    return fechaInicioDias;
+                default:
+                    return null;
+            }
+        }
+
+        // Función para mostrar alertas flotantes
+        function mostrarAlerta(mensaje, tipo) {
+            const alertContainer = document.querySelector('.alert-container');
+            const alertId = 'alert-' + Date.now();
+
+            const alertClass = tipo === 'error' ? 'alert-danger' : 'alert-success';
+            const icon = tipo === 'error' ? '❌' : '✅';
+
+            const alertDiv = document.createElement('div');
+            alertDiv.id = alertId;
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${icon} ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            alertContainer.appendChild(alertDiv);
+
+            // Auto-eliminar después de 5 segundos
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        // Preparar datos para enviar al backend
+        function prepararDatosEnvio() {
+            if (duracionHorasRadio.checked) {
+                document.getElementById('fechaInicioPermiso').value = fechaHoras.value;
+                document.getElementById('fechaFinPermiso').value = fechaHoras.value;
+            } else {
+                document.getElementById('fechaInicioPermiso').value = fechaInicioDias.value;
+                document.getElementById('fechaFinPermiso').value = fechaFinDias.value;
+            }
+            return true;
+        }
+
+        // Asignar la función prepararDatosEnvio al evento submit
+        form.addEventListener('submit', function(e) {
+            if (!prepararDatosEnvio()) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+</body>
+</html>
