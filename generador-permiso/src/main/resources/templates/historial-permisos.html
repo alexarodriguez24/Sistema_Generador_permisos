@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Permisos - ITCA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">ITCA - Mis Permisos</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="${dashboardUrl != null ? dashboardUrl : '/permisos/dashboard'}">Dashboard</a>
+            <a class="nav-link" th:href="${solicitarUrl != null ? solicitarUrl : '/permisos/solicitar'}" th:if="${userRole == 'ESTUDIANTE'}">Solicitar Permiso</a>
+            <a class="nav-link" th:href="@{/logout}">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Historial de Mis Permisos</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Mensajes de éxito/error -->
+                    <div th:if="${param.success}" class="alert alert-success">
+                        ✅ Permiso solicitado correctamente.
+                    </div>
+                    <div th:if="${param.error}" class="alert alert-danger">
+                        ❌ Error al procesar la solicitud.
+                    </div>
+
+                    <!-- Filtros rápidos para Colaborador -->
+                    <div th:if="${userRole == 'COLABORADOR'}" class="mb-3">
+                        <h6>Filtros rápidos:</h6>
+                        <div class="btn-group" role="group">
+                            <a th:href="@{/colaborador/permisos}" class="btn btn-outline-primary">
+                                <i class="bi bi-list"></i> Todos
+                            </a>
+                            <a th:href="@{/colaborador/permisos/estado/PENDIENTE}" class="btn btn-outline-warning">
+                                <i class="bi bi-clock"></i> Pendientes
+                            </a>
+                            <a th:href="@{/colaborador/permisos/estado/APROBADO}" class="btn btn-outline-success">
+                                <i class="bi bi-check-circle"></i> Aprobados
+                            </a>
+                            <a th:href="@{/colaborador/permisos/estado/RECHAZADO}" class="btn btn-outline-danger">
+                                <i class="bi bi-x-circle"></i> Rechazados
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo de Permiso</th>
+                                <th>Fecha Solicitud</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="permiso : ${permisos}" th:if="${permiso.activo}">
+                                <td th:text="${permiso.id}">1</td>
+                                <td>
+                                        <span th:if="${permiso.tipoPermiso != null}"
+                                              th:text="${permiso.tipoPermiso.nombre}">
+                                            Tipo de permiso
+                                        </span>
+                                    <span th:unless="${permiso.tipoPermiso != null}">
+                                            No especificado
+                                        </span>
+                                </td>
+                                <td th:text="${#temporals.format(permiso.fechaSolicitud, 'dd/MM/yyyy HH:mm')}">
+                                    01/01/2024
+                                </td>
+                                <td th:text="${#temporals.format(permiso.fechaInicioPermiso, 'dd/MM/yyyy')}">
+                                    01/01/2024
+                                </td>
+                                <td th:text="${#temporals.format(permiso.fechaFinPermiso, 'dd/MM/yyyy')}">
+                                    02/01/2024
+                                </td>
+                                <td>
+                                    <!-- CORRECCIÓN: Usar permiso.estado.name() -->
+                                    <span th:switch="${permiso.estado.name()}">
+                                        <span th:case="'PENDIENTE'" class="badge bg-warning">PENDIENTE</span>
+                                        <span th:case="'APROBADO'" class="badge bg-success">APROBADO</span>
+                                        <span th:case="'RECHAZADO'" class="badge bg-danger">RECHAZADO</span>
+                                        <span th:case="'EXPIRADO'" class="badge bg-secondary">EXPIRADO</span>
+                                        <span th:case="'IMPRESO'" class="badge bg-info">IMPRESO</span>
+                                        <span th:case="*" class="badge bg-secondary" th:text="${permiso.estado}">DESCONOCIDO</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <!-- Acciones para Colaborador -->
+                                    <a th:if="${userRole == 'COLABORADOR'}"
+                                       th:href="@{/colaborador/permiso/{id}(id=${permiso.id})}"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye"></i> Ver Detalle
+                                    </a>
+
+                                    <!-- Acciones para Estudiante -->
+                                    <a th:if="${userRole == 'ESTUDIANTE'}"
+                                       th:href="@{/permisos/detalle/{id}(id=${permiso.id})}"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye"></i> Ver
+                                    </a>
+
+                                    <!-- CORRECCIÓN: Usar el enum correctamente en la condición -->
+                                    <form th:if="${userRole == 'ADMIN' && permiso.estado.name() == ''}"
+                                          th:action="@{/permisos/cancelar/{id}(id=${permiso.id})}"
+                                          method="post"
+                                          style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('¿Está seguro de que desea cancelar este permiso?')">
+                                            <i class="bi bi-x-lg"></i> Cancelar
+                                        </button>
+                                    </form>
+
+                                    <!-- Acciones para Admin -->
+                                    <a th:if="${userRole == 'ADMIN'}"
+                                       th:href="@{/admin/permiso/{id}(id=${permiso.id})}"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye"></i> Ver
+                                    </a>
+
+                                    <!-- Acciones para Copias -->
+                                    <a th:if="${userRole == 'COPIAS'}"
+                                       th:href="@{/copias/generar/{id}(id=${permiso.id})}"
+                                       class="btn btn-sm btn-info">
+                                        <i class="bi bi-printer"></i> Ver/Imprimir
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(permisos)}">
+                                <td colspan="7" class="text-center text-muted">
+                                    No hay permisos solicitados.
+                                    <a th:href="@{/permisos/solicitar}" class="btn btn-link">Solicitar un permiso</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Estadísticas -->
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card text-white bg-primary">
+                                <div class="card-body text-center">
+                                    <h4 th:text="${totalPermisos != null ? totalPermisos : 0}">0</h4>
+                                    <p>Total de Permisos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-success">
+                                <div class="card-body text-center">
+                                    <h4 th:text="${permisosAprobados != null ? permisosAprobados : 0}">0</h4>
+                                    <p>Aprobados</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-warning">
+                                <div class="card-body text-center">
+                                    <h4 th:text="${permisosPendientes != null ? permisosPendientes : 0}">0</h4>
+                                    <p>Pendientes</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-danger">
+                                <div class="card-body text-center">
+                                    <h4 th:text="${permisosRechazados != null ? permisosRechazados : 0}">0</h4>
+                                    <p>Rechazados</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

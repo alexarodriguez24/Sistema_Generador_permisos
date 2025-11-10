@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Estadísticas - ITCA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .stat-card {
+            transition: transform 0.3s;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .progress {
+            height: 25px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">ITCA - Estadísticas del Sistema</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/admin/dashboard}">Dashboard</a>
+            <a class="nav-link" th:href="@{/admin/permisos}">Todos los Permisos</a>
+            <a class="nav-link" th:href="@{/logout}">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- Información del Administrador -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h1>Estadísticas del Sistema</h1>
+                    <p class="text-muted mb-0">
+                        <strong>Administrador:</strong>
+                        <span th:text="${adminNombre != null ? adminNombre : 'Administrador'}">Administrador</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensajes de error -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card stat-card text-white bg-primary">
+                <div class="card-body text-center">
+                    <h2 th:text="${totalPermisos != null ? totalPermisos : 0}">0</h2>
+                    <p>Total de Permisos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-white bg-success">
+                <div class="card-body text-center">
+                    <h2 th:text="${permisosAprobados != null ? permisosAprobados : 0}">0</h2>
+                    <p>Aprobados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-white bg-warning">
+                <div class="card-body text-center">
+                    <h2 th:text="${permisosPendientes != null ? permisosPendientes : 0}">0</h2>
+                    <p>Pendientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-white bg-danger">
+                <div class="card-body text-center">
+                    <h2 th:text="${permisosRechazados != null ? permisosRechazados : 0}">0</h2>
+                    <p>Rechazados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribución Porcentual -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Distribución de Permisos por Estado</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Aprobados -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Aprobados</span>
+                            <span th:text="${porcentajeAprobados != null ? porcentajeAprobados : '0.0'} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 th:style="'width: ' + ${porcentajeAprobados != null ? porcentajeAprobados : '0'} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajeAprobados}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosAprobados != null ? permisosAprobados : 0}">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pendientes -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Pendientes</span>
+                            <span th:text="${porcentajePendientes != null ? porcentajePendientes : '0.0'} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar"
+                                 th:style="'width: ' + ${porcentajePendientes != null ? porcentajePendientes : '0'} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajePendientes}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosPendientes != null ? permisosPendientes : 0}">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rechazados -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Rechazados</span>
+                            <span th:text="${porcentajeRechazados != null ? porcentajeRechazados : '0.0'} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-danger" role="progressbar"
+                                 th:style="'width: ' + ${porcentajeRechazados != null ? porcentajeRechazados : '0'} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajeRechazados}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosRechazados != null ? permisosRechazados : 0}">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Impresos -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Impresos</span>
+                            <span th:text="${porcentajeImpresos != null ? porcentajeImpresos : '0.0'} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" role="progressbar"
+                                 th:style="'width: ' + ${porcentajeImpresos != null ? porcentajeImpresos : '0'} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajeImpresos}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosImpresos != null ? permisosImpresos : 0}">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expirados -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Expirados</span>
+                            <span th:text="${porcentajeExpirados != null ? porcentajeExpirados : '0.0'} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-secondary" role="progressbar"
+                                 th:style="'width: ' + ${porcentajeExpirados != null ? porcentajeExpirados : '0'} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajeExpirados}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosExpirados != null ? permisosExpirados : 0}">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla Detallada -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Resumen Detallado</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th>Cantidad</th>
+                                <th>Porcentaje</th>
+                                <th>Barra de Progreso</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><span class="badge bg-success">Aprobados</span></td>
+                                <td th:text="${permisosAprobados != null ? permisosAprobados : 0}">0</td>
+                                <td th:text="${porcentajeAprobados != null ? porcentajeAprobados : '0.0'} + '%'">0.0%</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-success" th:style="'width: ' + ${porcentajeAprobados != null ? porcentajeAprobados : '0'} + '%;'"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-warning">Pendientes</span></td>
+                                <td th:text="${permisosPendientes != null ? permisosPendientes : 0}">0</td>
+                                <td th:text="${porcentajePendientes != null ? porcentajePendientes : '0.0'} + '%'">0.0%</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-warning" th:style="'width: ' + ${porcentajePendientes != null ? porcentajePendientes : '0'} + '%;'"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-danger">Rechazados</span></td>
+                                <td th:text="${permisosRechazados != null ? permisosRechazados : 0}">0</td>
+                                <td th:text="${porcentajeRechazados != null ? porcentajeRechazados : '0.0'} + '%'">0.0%</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-danger" th:style="'width: ' + ${porcentajeRechazados != null ? porcentajeRechazados : '0'} + '%;'"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-info">Impresos</span></td>
+                                <td th:text="${permisosImpresos != null ? permisosImpresos : 0}">0</td>
+                                <td th:text="${porcentajeImpresos != null ? porcentajeImpresos : '0.0'} + '%'">0.0%</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-info" th:style="'width: ' + ${porcentajeImpresos != null ? porcentajeImpresos : '0'} + '%;'"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-secondary">Expirados</span></td>
+                                <td th:text="${permisosExpirados != null ? permisosExpirados : 0}">0</td>
+                                <td th:text="${porcentajeExpirados != null ? porcentajeExpirados : '0.0'} + '%'">0.0%</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-secondary" th:style="'width: ' + ${porcentajeExpirados != null ? porcentajeExpirados : '0'} + '%;'"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Sistema -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5>Métricas del Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Resumen de Actividad:</h6>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Total de Permisos en el Sistema
+                                    <span class="badge bg-primary rounded-pill" th:text="${totalPermisos != null ? totalPermisos : 0}">0</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Permisos Procesados (Aprobados + Rechazados)
+                                    <span class="badge bg-success rounded-pill" th:text="${(permisosAprobados != null ? permisosAprobados : 0) + (permisosRechazados != null ? permisosRechazados : 0)}">0</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Pendientes de Revisión
+                                    <span class="badge bg-warning rounded-pill" th:text="${permisosPendientes != null ? permisosPendientes : 0}">0</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Eficiencia del Sistema:</h6>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    <strong>Tasa de Aprobación:</strong>
+                                    <span class="float-end" th:text="${tasaAprobacion != null ? tasaAprobacion : '0.0'} + '%'">0.0%</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Tasa de Rechazo:</strong>
+                                    <span class="float-end" th:text="${tasaRechazo != null ? tasaRechazo : '0.0'} + '%'">0.0%</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Eficiencia General:</strong>
+                                    <span class="float-end" th:text="${eficienciaSistema != null ? eficienciaSistema : '0.0'} + '%'">0.0%</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-white text-center py-3 mt-5">
+    <div class="container">
+        <p>&copy; 2025 ITCA - Sistema de Gestión de Permisos. Panel de Estadísticas</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

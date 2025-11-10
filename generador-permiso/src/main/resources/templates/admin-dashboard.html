@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Administrador - ITCA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .card-stat {
+            transition: transform 0.3s;
+        }
+        .card-stat:hover {
+            transform: translateY(-5px);
+        }
+        .bg-custom-1 { background: linear-gradient(45deg, #667eea, #764ba2); }
+        .bg-custom-2 { background: linear-gradient(45deg, #f093fb, #f5576c); }
+        .bg-custom-3 { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+        .bg-custom-4 { background: linear-gradient(45deg, #43e97b, #38f9d7); }
+        .bg-custom-5 { background: linear-gradient(45deg, #fa709a, #fee140); }
+        .progress {
+            height: 25px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">ITCA - Panel de Administración</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/admin/dashboard}">Dashboard</a>
+            <a class="nav-link" th:href="@{/admin/permisos}">Todos los Permisos</a>
+            <a class="nav-link" th:href="@{/logout}">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- Mensajes de error -->
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Información del Administrador -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h1>Bienvenido, Administrador</h1>
+                    <p class="text-muted mb-0">
+                        <strong>Usuario:</strong>
+                        <span th:text="${adminNombre != null ? adminNombre : 'Administrador'}">Administrador</span> |
+                        <span th:text="${adminEmail != null ? adminEmail : 'admin@itca.edu.sv'}">admin@itca.edu.sv</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Principales -->
+    <div class="row mt-4">
+        <div class="col-md-2">
+            <div class="card card-stat bg-custom-1 text-white">
+                <div class="card-body text-center">
+                    <h2 th:text="${totalPermisos != null ? totalPermisos : 0}">0</h2>
+                    <p>Total Permisos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-stat bg-custom-2 text-white">
+                <div class="card-body text-center">
+                    <h2 th:text="${permisosPendientes != null ? permisosPendientes : 0}">0</h2>
+                    <p>Pendientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-stat bg-custom-3 text-white">
+                <div class="card-body text-center">
+                    <h2 th:text="${permisosAprobados != null ? permisosAprobados : 0}">0</h2>
+                    <p>Aprobados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-stat bg-custom-4 text-white">
+                <div class="card-body text-center">
+                    <h2 th:text="${permisosRechazados != null ? permisosRechazados : 0}">0</h2>
+                    <p>Rechazados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-stat bg-custom-5 text-white">
+                <div class="card-body text-center">
+                    <h2 th:text="${permisosImpresos != null ? permisosImpresos : 0}">0</h2>
+                    <p>Impresos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card card-stat bg-dark text-white">
+                <div class="card-body text-center">
+                    <h2 th:text="${permisosExpirados != null ? permisosExpirados : 0}">0</h2>
+                    <p>Expirados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribución Porcentual - Nueva Sección -->
+    <div class="row mt-4" th:if="${porcentajeAprobados != null}">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Distribución de Permisos por Estado</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Aprobados -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><strong>Aprobados</strong></span>
+                            <span th:text="${porcentajeAprobados} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 th:style="'width: ' + ${porcentajeAprobados} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajeAprobados}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosAprobados} + ' permisos'">0 permisos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pendientes -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><strong>Pendientes</strong></span>
+                            <span th:text="${porcentajePendientes} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar"
+                                 th:style="'width: ' + ${porcentajePendientes} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajePendientes}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosPendientes} + ' permisos'">0 permisos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rechazados -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><strong>Rechazados</strong></span>
+                            <span th:text="${porcentajeRechazados} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-danger" role="progressbar"
+                                 th:style="'width: ' + ${porcentajeRechazados} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajeRechazados}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosRechazados} + ' permisos'">0 permisos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Impresos -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><strong>Impresos</strong></span>
+                            <span th:text="${porcentajeImpresos} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" role="progressbar"
+                                 th:style="'width: ' + ${porcentajeImpresos} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajeImpresos}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosImpresos} + ' permisos'">0 permisos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expirados -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span><strong>Expirados</strong></span>
+                            <span th:text="${porcentajeExpirados} + '%'">0.0%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-secondary" role="progressbar"
+                                 th:style="'width: ' + ${porcentajeExpirados} + '%;'"
+                                 th:attr="aria-valuenow=${porcentajeExpirados}" aria-valuemin="0" aria-valuemax="100">
+                                <span th:text="${permisosExpirados} + ' permisos'">0 permisos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="bi bi-list-check me-2"></i>Gestión Completa</h5>
+                    <p class="card-text">Accede a todos los permisos del sistema para supervisión</p>
+                    <a th:href="@{/admin/permisos}" class="btn btn-primary btn-lg">Ver Todos los Permisos</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="bi bi-graph-up-arrow me-2"></i>Estadísticas</h5>
+                    <p class="card-text">Reportes y análisis detallados del sistema</p>
+                    <a th:href="@{/admin/estadisticas}" class="btn btn-info btn-lg">Ver Estadísticas</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title"><i class="bi bi-speedometer2 me-2"></i>Monitor del Sistema</h5>
+                    <p class="card-text">Estado general y métricas de rendimiento</p>
+                    <button class="btn btn-success btn-lg" disabled>Sistema Activo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de Permisos -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Resumen de Permisos por Estado</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="p-3 border rounded">
+                                <h3 class="text-warning" th:text="${permisosPendientes != null ? permisosPendientes : 0}">0</h3>
+                                <p class="mb-0">Pendientes de Revisión</p>
+                                <small class="text-muted" th:text="'(' + ${porcentajePendientes != null ? porcentajePendientes : '0.0'} + '%)'">(0.0%)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 border rounded">
+                                <h3 class="text-success" th:text="${permisosAprobados != null ? permisosAprobados : 0}">0</h3>
+                                <p class="mb-0">Aprobados</p>
+                                <small class="text-muted" th:text="'(' + ${porcentajeAprobados != null ? porcentajeAprobados : '0.0'} + '%)'">(0.0%)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 border rounded">
+                                <h3 class="text-danger" th:text="${permisosRechazados != null ? permisosRechazados : 0}">0</h3>
+                                <p class="mb-0">Rechazados</p>
+                                <small class="text-muted" th:text="'(' + ${porcentajeRechazados != null ? porcentajeRechazados : '0.0'} + '%)'">(0.0%)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3 border rounded">
+                                <h3 class="text-info" th:text="${permisosImpresos != null ? permisosImpresos : 0}">0</h3>
+                                <p class="mb-0">Comprobantes Impresos</p>
+                                <small class="text-muted" th:text="'(' + ${porcentajeImpresos != null ? porcentajeImpresos : '0.0'} + '%)'">(0.0%)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Sistema -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5><i class="bi bi-info-circle me-2"></i>Información del Sistema Administrativo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Funciones del Administrador:</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><i class="bi bi-eye me-2 text-primary"></i>Supervisión completa del sistema</li>
+                                <li class="list-group-item"><i class="bi bi-files me-2 text-primary"></i>Acceso a todos los permisos</li>
+                                <li class="list-group-item"><i class="bi bi-graph-up me-2 text-primary"></i>Generación de reportes estadísticos</li>
+                                <li class="list-group-item"><i class="bi bi-speedometer2 me-2 text-primary"></i>Monitor del rendimiento del sistema</li>
+                                <li class="list-group-item"><i class="bi bi-people me-2 text-primary"></i>Gestión de usuarios y roles</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Métricas del Sistema:</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Total de permisos
+                                    <span class="badge bg-primary rounded-pill" th:text="${totalPermisos != null ? totalPermisos : 0}">0</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Por aprobar
+                                    <span class="badge bg-warning rounded-pill" th:text="${permisosPendientes != null ? permisosPendientes : 0}">0</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Eficiencia del sistema
+                                    <span class="badge bg-info rounded-pill" th:text="${eficienciaSistema != null ? eficienciaSistema : '0.0'} + '%'">0.0%</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Tasa de aprobación
+                                    <span class="badge bg-success rounded-pill" th:text="${tasaAprobacion != null ? tasaAprobacion : '0.0'} + '%'">0.0%</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Tasa de rechazo
+                                    <span class="badge bg-danger rounded-pill" th:text="${tasaRechazo != null ? tasaRechazo : '0.0'} + '%'">0.0%</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-white text-center py-3 mt-5">
+    <div class="container">
+        <p>&copy; 2025 ITCA - Sistema de Gestión de Permisos. Rol: Administrador</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

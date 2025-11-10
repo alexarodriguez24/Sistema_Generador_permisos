@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Copias - ITCA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card-stat {
+            transition: transform 0.3s;
+        }
+        .card-stat:hover {
+            transform: translateY(-5px);
+        }
+        .bg-custom-1 { background: linear-gradient(45deg, #667eea, #764ba2); }
+        .bg-custom-2 { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="#">ITCA - Departamento de Copias</a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" th:href="@{/copias/dashboard}">Dashboard</a>
+            <a class="nav-link" th:href="@{/copias/pendientes}">Permisos Pendientes</a>
+            <a class="nav-link" th:href="@{/copias/historial}">Historial</a>
+            <a class="nav-link" th:href="@{/logout}">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- Información del Usuario de Copias -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h1>Bienvenido, Departamento de Copias</h1>
+                    <p class="text-muted mb-0">
+                        <strong>Usuario:</strong>
+                        <span th:text="${copiasNombre}">Ana Gómez</span> |
+                        <span th:text="${copiasEmail}">copias@itca.edu.sv</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card card-stat bg-custom-1 text-white">
+                <div class="card-body text-center">
+                    <h2 th:text="${pendientesCount}">0</h2>
+                    <p>Permisos Pendientes de Impresión</p>
+                    <small>Permisos aprobados que requieren comprobante</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card card-stat bg-custom-2 text-white">
+                <div class="card-body text-center">
+                    <h2 th:text="${impresosCount}">0</h2>
+                    <p>Comprobantes Impresos</p>
+                    <small>Total de permisos procesados</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Imprimir Comprobantes</h5>
+                    <p class="card-text">Generar comprobantes de permisos aprobados pendientes de impresión</p>
+                    <a th:href="@{/copias/pendientes}" class="btn btn-primary btn-lg">Ver Pendientes</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Historial de Impresiones</h5>
+                    <p class="card-text">Consultar el historial completo de comprobantes generados</p>
+                    <a th:href="@{/copias/historial}" class="btn btn-info btn-lg">Ver Historial</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Permisos Pendientes (si hay) -->
+    <div class="row mt-5" th:if="${pendientesCount > 0}">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        Permisos Pendientes de Impresión
+                        <span class="badge bg-dark" th:text="${pendientesCount}">0</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Alumno</th>
+                                <th>Carnet</th>
+                                <th>Tipo de Permiso</th>
+                                <th>Fecha Solicitud</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="permiso : ${permisosPendientes}">
+                                <td th:text="${permiso.nombreAlumnoCompleto}"></td>
+                                <td th:text="${permiso.carnetAlumno}"></td>
+                                <td th:text="${permiso.nombreTipoPermiso}"></td>
+                                <td th:text="${#temporals.format(permiso.fechaSolicitud, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td>
+                                    <a th:href="@{/copias/imprimir/{id}(id=${permiso.id})}"
+                                       class="btn btn-success btn-sm">
+                                        <i class="bi bi-printer"></i> Imprimir
+                                    </a>
+                                    <a th:href="@{/copias/generar/{id}(id=${permiso.id})}"
+                                       class="btn btn-info btn-sm">
+                                        <i class="bi bi-eye"></i> Vista Previa
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensaje si no hay pendientes -->
+    <div class="row mt-5" th:if="${pendientesCount == 0}">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="text-success">¡Excelente!</h5>
+                    <p class="text-muted">No hay permisos pendientes de impresión en este momento.</p>
+                    <p>Puedes revisar el historial de comprobantes ya generados.</p>
+                    <a th:href="@{/copias/historial}" class="btn btn-outline-primary">Ver Historial de Impresiones</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Departamento -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5>Funciones del Departamento de Copias</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Responsabilidades:</h6>
+                            <ul>
+                                <li>Generar comprobantes de permisos aprobados</li>
+                                <li>Registrar permisos como impresos en el sistema</li>
+                                <li>Mantener historial de comprobantes generados</li>
+                                <li>Entregar comprobantes físicos a estudiantes</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Flujo de Trabajo:</h6>
+                            <ol>
+                                <li>Permiso es <strong>aprobado</strong> por colaborador</li>
+                                <li>Aparece en <strong>pendientes de impresión</strong></li>
+                                <li>Generas el <strong>comprobante</strong></li>
+                                <li>Sistema marca como <strong>impreso</strong></li>
+                                <li>Entregas comprobante al estudiante</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-white text-center py-3 mt-5">
+    <div class="container">
+        <p>&copy; 2025 ITCA - Sistema de Gestión de Permisos. Rol: Departamento de Copias</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
